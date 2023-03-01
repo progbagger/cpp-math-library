@@ -1,6 +1,7 @@
 #ifndef MATH_LIBRARIES_CPP_MATH_VECTOR_H_
 #define MATH_LIBRARIES_CPP_MATH_VECTOR_H_
 
+#include <cmath>
 #include <initializer_list>
 #include <istream>
 #include <ostream>
@@ -34,7 +35,7 @@ class Vector {
    * @brief Construct a new vector of size 3 filled by 0
    *
    */
-  explicit Vector() noexcept : Vector(3UL, 0) {}
+  explicit Vector() noexcept : Vector(3UL, ValueType()) {}
 
   /**
    * @brief Construct a new vector of size filled by value (0 by default)
@@ -42,7 +43,7 @@ class Vector {
    * @param size size of vector
    * @param value what to fill vector with
    */
-  explicit Vector(SizeType size, ValueType value = 0) {
+  explicit Vector(SizeType size, ConstReference value = ValueType()) {
     if (!size) throw std::invalid_argument("Vector size can not be 0");
     data_ = DataType(size, value);
   }
@@ -52,11 +53,10 @@ class Vector {
    *
    * @param list initializer list which size is not 0
    */
-  explicit Vector(const std::initializer_list<ValueType>& list) noexcept {
-    static_assert(list.size(), "Vector initializer list can not be empty");
+  explicit Vector(const std::initializer_list<ValueType>& list) {
+    if (!list.size()) throw std::invalid_argument("Vector size can not be 0");
     data_.reserve(list.size());
     for (const auto& i : list) data_.push_back(i);
-    data_.shrink_to_fit();
   }
 
   /**
@@ -65,7 +65,7 @@ class Vector {
    * @param x1 X coordinate
    * @param x2 Y coordinate
    */
-  Vector(ValueType x1, ValueType x2) noexcept : Vector{x1, x2} {}
+  Vector(ConstReference x1, ConstReference x2) noexcept : Vector{x1, x2} {}
 
   /**
    * @brief Construct a new vector of size 3
@@ -74,7 +74,7 @@ class Vector {
    * @param x2 Y coordinate
    * @param x3 Z coordinate
    */
-  Vector(ValueType x1, ValueType x2, ValueType x3) noexcept
+  Vector(ConstReference x1, ConstReference x2, ConstReference x3) noexcept
       : Vector{x1, x2, x3} {}
 
   SizeType Size() const noexcept { return data_.size(); }
@@ -171,38 +171,98 @@ class Vector {
       in >> *i;
       if (in.fail()) break;
     }
+    v.data_.shrink_to_fit();
     return in;
   }
 
-  Vector& operator+=(const Vector& other) {
-    CheckSizeForOperation(other);
+  bool operator==(const Vector& other) const noexcept {
+    if (Size() != other.Size()) return false;
+    auto i1 = Begin();
+    for (const auto& i2 : other) {
+      if (*(i1++) != i2) return false;
+    }
+    return true;
+  }
+
+  bool operator!=(const Vector& other) const noexcept {
+    return !(*this != other);
+  }
+
+  Vector& operator+=(const Vector& other) noexcept {
+    Extend(other.Size());
     auto i1 = Begin();
     for (const auto& i2 : other) *(i1++) += i2;
     return *this;
   }
 
-  Vector& operator-=(const Vector& other) {
-    CheckSizeForOperation(other);
+  Vector& operator-=(const Vector& other) noexcept {
+    Extend(other.Size());
     auto i1 = Begin();
     for (const auto& i2 : other) *(i1++) -= i2;
     return *this;
   }
 
-  Vector operator+(const Vector& other) {
-    CheckSizeForOperation(other);
+  Vector& operator*=(ConstReference value) noexcept {
+    for (auto& v : *this) v *= value;
+    return *this;
+  }
+
+  Vector& operator/=(ConstReference value) noexcept {
+    for (auto& v : *this) v /= value;
+    return *this;
+  }
+
+  Vector operator+(const Vector& other) const noexcept {
     Vector result(*this);
     result += other;
     return result;
   }
 
-  Vector operator-(const Vector* other) {
-    CheckSizeForOperation(other);
+  Vector operator-(const Vector& other) const noexcept {
     Vector result(*this);
     result -= other;
     return result;
   }
 
-  void Resize(SizeType new_size) noexcept { if () }
+  Vector operator*(ConstReference value) const noexcept {
+    Vector result(*this);
+    result *= value;
+    return result;
+  }
+
+  Vector operator/(ConstReference value) const noexcept {
+    Vector result(*this);
+    result /= value;
+    return result;
+  }
+
+  friend Vector operator*(ConstReference value, const Vector& v) noexcept {
+    return Vector(v) * value;
+  }
+
+  ValueType operator*(const Vector& other) const {
+    CheckSizeForOperation(other);
+    ValueType result = 0;
+    auto i1 = Begin(), i2 = other.Begin();
+    while (i1 != End()) result += *(i1++) * *(i2++);
+    return result;
+  }
+
+  void Resize(SizeType new_size, ConstReference value = ValueType()) {
+    if (!new_size) throw std::invalid_argument("Vector size can not be 0");
+    data_.resize(new_size, value);
+  }
+
+  void Extend(SizeType new_size,
+              const ValueType& value = ValueType()) noexcept {
+    if (new_size > Size()) data_.resize(new_size, value);
+  }
+
+  ValueType Abs() const noexcept {
+    ValueType result = 0;
+    for (const auto& v : *this) result += v * v;
+    return sqrt(result);
+  }
 
  private:
   void CheckSizeForGetter(SizeType pos) const {
