@@ -117,6 +117,22 @@ class Vector {
     return data_[pos];
   }
 
+  /**
+   * @brief Get vector element with bounds checking
+   *
+   * @param pos Position of needed element
+   * @return changable reference
+   */
+  Reference operator()(SizeType pos) { return At(pos); }
+
+  /**
+   * @brief Get vector element with bounds checking
+   *
+   * @param pos Position of needed element
+   * @return constant reference
+   */
+  ConstReference operator()(SizeType pos) const { return At(pos); }
+
   // Returns writable iterator to the beginning of the vector
   Iterator Begin() noexcept { return data_.begin(); }
 
@@ -283,5 +299,16 @@ class Vector {
 };
 
 }  // namespace math
+
+// overrides of std methods
+
+namespace std {
+
+template <class T>
+T std::abs(const math::Vector<T>& v) noexcept {
+  return v.Abs();
+}
+
+}  // namespace std
 
 #endif  // MATH_LIBRARIES_CPP_MATH_VECTOR_H_
