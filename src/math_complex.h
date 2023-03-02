@@ -40,6 +40,27 @@ class Complex {
 
   explicit operator bool() const noexcept { return a_ && i_; }
 
+  std::string ToString() const noexcept {
+    std::string result;
+    if ((!a_ && !i_) || (a_ && !i_)) {
+      result += std::to_string(a_);
+      return result;
+    }
+    if (i_ && !a_) {
+      result += std::to_string(i_);
+      result += 'i';
+      return result;
+    }
+    result += '(';
+    result += std::to_string(a_);
+    if (i_ > 0) result += '+';
+    result += std::to_string(i_);
+    result += "i)";
+    return result;
+  }
+
+  explicit operator std::string() const noexcept { return ToString(); }
+
   /**
    * @brief Outputs complex number. (0 + 5i) will be outputed as 5i. (5 + 0i)
    will be outputed as 5. (5 + 5i) will be outputed as (5+5i).
@@ -49,17 +70,7 @@ class Complex {
    * @return std::ostream&
    */
   friend std::ostream& operator<<(std::ostream& out, const Complex<T>& c) {
-    if ((!c.a_ && !c.i_) || (c.a_ && !c.i_)) {
-      out << c.a_;
-      return out;
-    }
-    if (c.i_ && !c.a_) {
-      out << c.i_ << 'i';
-      return out;
-    }
-    out << '(' << c.a_;
-    if (c.i_ > 0) out << '+';
-    out << c.i_ << "i)";
+    out << c.ToString();
     return out;
   }
 
@@ -185,6 +196,10 @@ class Complex {
    * @return ValueType
    */
   ValueType Im() const noexcept { return i_; }
+
+  Complex operator-() const noexcept { return *this * -1; }
+
+  Complex operator+() const noexcept { return *this; }
 
  private:
   ValueType a_;
