@@ -412,9 +412,44 @@ class Matrix {
    */
   Matrix operator!() const { return Inverse(); }
 
+  /**
+   * @brief Returns new matrix with elements multiplied by -1
+   *
+   */
   Matrix operator-() const noexcept { return *this * -1; }
 
+  /**
+   * @brief Returns copy of matrix
+   *
+   */
   Matrix operator+() const noexcept { return *this; }
+
+  /**
+   * @brief Set new rows count. If rows == 0 then throws std::invalid_argument
+   *
+   */
+  void SetRows(SizeType rows) {
+    if (!rows) throw std::invalid_argument("Matrix sizes can not be 0");
+    Matrix new_matrix(rows, columns_);
+    for (SizeType i = 0; i < std::min(rows, rows_); ++i)
+      for (SizeType j = 0; j < columns_; ++j)
+        new_matrix.GetElement(i, j) = GetElement(i, j);
+    *this = sttd::move(new_matrix);
+  }
+
+  /**
+   * @brief Set new columns count. If columns == 0 then throws
+   * std::invalid_argument
+   *
+   */
+  void SetColumns(SizeType columns) {
+    if (!columns) throw std::invalid_argument("Matrix sizes can not be 0");
+    Matrix new_matrix(rows_, columns);
+    for (SizeType i = 0; i < rows_; ++i)
+      for (SizeType j = 0; j < std::min(columns, columns_); ++j)
+        new_matrix.GetElement(i, j) = GetElement(i, j);
+    *this = sttd::move(new_matrix);
+  }
 
  private:
   Reference GetElement(SizeType row, SizeType column) noexcept {
