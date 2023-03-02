@@ -197,6 +197,10 @@ class Complex {
    */
   ValueType Im() const noexcept { return i_; }
 
+  Complex operator-() const noexcept { return *this * -1; }
+
+  Complex operator+() const noexcept { return *this; }
+
  private:
   ValueType a_;
   ValueType i_;
