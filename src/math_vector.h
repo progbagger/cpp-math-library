@@ -14,16 +14,17 @@ namespace math {
  * @brief Class that represents mathematical vector and methods and operators to
  * work with it.
  *
- * @tparam T was designed to be numeric, e. g. double, float, int, ...
+ * @tparam T was designed to be numeric, e. g. double, float, int, ... -
+ * defaults to float
  */
-template <class T = float>
+template <class T = double>
 class Vector {
  public:
   using ValueType = T;
-  using Reference = ValueType&;
-  using ConstReference = const ValueType&;
   using DataType = std::vector<ValueType>;
-  using SizeType = std::size_t;
+  using Reference = typename DataType::reference;
+  using ConstReference = typename DataType::const_reference;
+  using SizeType = typename DataType::size_type;
   using Iterator = typename DataType::iterator;
   using ConstIterator = typename DataType::const_iterator;
 
@@ -191,6 +192,7 @@ class Vector {
     return in;
   }
 
+  // Comparison of values of two vectors. Return true if vectors are equal
   bool operator==(const Vector& other) const noexcept {
     if (Size() != other.Size()) return false;
     auto i1 = Begin();
@@ -200,10 +202,12 @@ class Vector {
     return true;
   }
 
+  // Comparison of values of two vectors. Return false if vectors are equal
   bool operator!=(const Vector& other) const noexcept {
-    return !(*this != other);
+    return !operator==(other);
   }
 
+  // Sum other into this. If this smaller than other - this extends
   Vector& operator+=(const Vector& other) noexcept {
     Extend(other.Size());
     auto i1 = Begin();
@@ -211,6 +215,7 @@ class Vector {
     return *this;
   }
 
+  // Sub other from this. If this smaller than other - this extends
   Vector& operator-=(const Vector& other) noexcept {
     Extend(other.Size());
     auto i1 = Begin();
@@ -218,44 +223,55 @@ class Vector {
     return *this;
   }
 
+  // Multiply vector values by value
   Vector& operator*=(ConstReference value) noexcept {
     for (auto& v : *this) v *= value;
     return *this;
   }
 
+  // Divide vector values bu value
   Vector& operator/=(ConstReference value) noexcept {
-    for (auto& v : *this) v /= value;
-    return *this;
+    return operator*=(1 / value);
   }
 
+  // Sum of two vectors. If this is smaller than other - this extends
   Vector operator+(const Vector& other) const noexcept {
     Vector result(*this);
     result += other;
     return result;
   }
 
+  // Sub of two vectors. If this is smaller than other - this extends
   Vector operator-(const Vector& other) const noexcept {
     Vector result(*this);
     result -= other;
     return result;
   }
 
+  // Multiply vector values by value
   Vector operator*(ConstReference value) const noexcept {
     Vector result(*this);
     result *= value;
     return result;
   }
 
+  // Divide vector values by value
   Vector operator/(ConstReference value) const noexcept {
     Vector result(*this);
     result /= value;
     return result;
   }
 
+  // Multiply vector values by value
   friend Vector operator*(ConstReference value, const Vector& v) noexcept {
     return Vector(v) * value;
   }
 
+  /**
+   * @brief Calculates cross product of two vectors. If vectors have different
+   * sizes - throws std::invalid_argument
+   *
+   */
   ValueType operator*(const Vector& other) const {
     CheckSizeForOperation(other);
     ValueType result = 0;
@@ -264,16 +280,30 @@ class Vector {
     return result;
   }
 
+  /**
+   * @brief Change size of vector. If new size greater than size - fill with
+   * value (defaults to 0), else - discard other values
+   *
+   * @param new_size
+   * @param value
+   */
   void Resize(SizeType new_size, ConstReference value = ValueType()) {
     if (!new_size) throw std::invalid_argument("Vector size can not be 0");
     data_.resize(new_size, value);
   }
 
+  /**
+   * @brief Enlarge vector. If new size is less or equal - do nothing
+   *
+   * @param new_size
+   * @param value
+   */
   void Extend(SizeType new_size,
               const ValueType& value = ValueType()) noexcept {
     if (new_size > Size()) data_.resize(new_size, value);
   }
 
+  // Calculates vector absolute value
   ValueType Abs() const noexcept {
     ValueType result = 0;
     for (const auto& v : *this) result += v * v;

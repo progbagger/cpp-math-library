@@ -13,9 +13,10 @@ namespace math {
 /**
  * @brief Matrix class to work with matrices as mathematical object.
  *
- * @tparam T was designed to be numeric, e. g. double, float, int, ...
+ * @tparam T was designed to be numeric, e. g. double, float, int, ... -
+ * defaults to double
  */
-template <class T = float>
+template <class T = double>
 class Matrix {
  public:
   using ValueType = T;
@@ -434,7 +435,7 @@ class Matrix {
     for (SizeType i = 0; i < std::min(rows, rows_); ++i)
       for (SizeType j = 0; j < columns_; ++j)
         new_matrix.GetElement(i, j) = GetElement(i, j);
-    *this = sttd::move(new_matrix);
+    *this = std::move(new_matrix);
   }
 
   /**
@@ -448,7 +449,7 @@ class Matrix {
     for (SizeType i = 0; i < rows_; ++i)
       for (SizeType j = 0; j < std::min(columns, columns_); ++j)
         new_matrix.GetElement(i, j) = GetElement(i, j);
-    *this = sttd::move(new_matrix);
+    *this = std::move(new_matrix);
   }
 
  private:

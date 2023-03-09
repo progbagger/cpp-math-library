@@ -14,9 +14,10 @@ namespace math {
  * complex number (5+2i) is subtracted with complex number (8+0i) and result
  * is complex (-3+2i).
  *
- * @tparam T was designed to be numeric, e. g. double, float, int, ...
+ * @tparam T was designed to be numeric, e. g. double, float, int, ... -
+ * defaults to double
  */
-template <class T = float>
+template <class T = double>
 class Complex {
  public:
   using ValueType = T;
