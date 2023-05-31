@@ -14,13 +14,10 @@ namespace math {
  * complex number (5+2i) is subtracted with complex number (8+0i) and result
  * is complex (-3+2i).
  *
- * @tparam T was designed to be numeric, e. g. double, float, int, ... -
- * defaults to double
  */
-template <class T = double>
 class Complex {
  public:
-  using ValueType = T;
+  using ValueType = double;
 
   // Constructs complex number equals (0 + 0i)
   Complex() noexcept : Complex(0.0, 0.0) {}
@@ -70,7 +67,7 @@ class Complex {
    * @param c complex number to output
    * @return std::ostream&
    */
-  friend std::ostream& operator<<(std::ostream& out, const Complex<T>& c) {
+  friend std::ostream& operator<<(std::ostream& out, const Complex& c) {
     out << c.ToString();
     return out;
   }
@@ -83,7 +80,7 @@ class Complex {
    * @param c complex number to input
    * @return std::istream&
    */
-  friend std::istream& operator>>(std::istream& in, Complex<T>& c) {
+  friend std::istream& operator>>(std::istream& in, Complex& c) {
     in >> c.a_ >> c.i_;
     return in;
   }
@@ -214,12 +211,12 @@ class Complex {
 namespace std {
 
 template <class T>
-math::Complex<T> abs(const math::Complex<T>& c) {
+math::Complex abs(const math::Complex& c) {
   return math::Complex(c.Abs());
 }
 
 template <class T>
-math::Complex<T> pow(const math::Complex<T>& base, unsigned deg) {
+math::Complex pow(const math::Complex& base, unsigned deg) {
   math::Complex result(1.0);
   for (unsigned i = 0U; i < deg; ++i) result *= base;
   return result;
@@ -229,12 +226,10 @@ math::Complex<T> pow(const math::Complex<T>& base, unsigned deg) {
 
 // literals
 
-math::Complex<long double> operator""_i(long double num) {
-  return math::Complex<long double>(0.0, num);
-}
+math::Complex operator""_i(long double num) { return math::Complex(0.0, num); }
 
-math::Complex<long long> operator""_i(unsigned long long num) {
-  return math::Complex<long long>(0.0, num);
+math::Complex operator""_i(unsigned long long num) {
+  return math::Complex(0.0, num);
 }
 
 #endif  // MATH_LIBRARIES_CPP_MATH_COMPLEX_H_

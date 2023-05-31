@@ -14,13 +14,10 @@ namespace math {
  * @brief Class that represents mathematical vector and methods and operators to
  * work with it.
  *
- * @tparam T was designed to be numeric, e. g. double, float, int, ... -
- * defaults to float
  */
-template <class T = double>
 class Vector {
  public:
-  using ValueType = T;
+  using ValueType = double;
   using DataType = std::vector<ValueType>;
   using Reference = typename DataType::reference;
   using ConstReference = typename DataType::const_reference;
@@ -167,9 +164,11 @@ class Vector {
    */
   friend std::ostream& operator<<(std::ostream& out, const Vector& v) {
     out << '{';
+    bool comma = false;
     for (auto i = v.Begin(); i != v.End(); ++i) {
+      if (comma) out << ", ";
+      comma = true;
       out << *i;
-      if (i != v.End() - 1) out << ", ";
     }
     out << '}';
     return out;
@@ -334,10 +333,7 @@ class Vector {
 
 namespace std {
 
-template <class T>
-T std::abs(const math::Vector<T>& v) noexcept {
-  return v.Abs();
-}
+math::Vector::ValueType abs(const math::Vector& v) noexcept { return v.Abs(); }
 
 }  // namespace std
 

@@ -13,18 +13,15 @@ namespace math {
 /**
  * @brief Matrix class to work with matrices as mathematical object.
  *
- * @tparam T was designed to be numeric, e. g. double, float, int, ... -
- * defaults to double
  */
-template <class T = double>
 class Matrix {
  public:
-  using ValueType = T;
-  using Reference = ValueType &;
-  using ConstReference = const ValueType &;
-  using ConstPointer = const ValueType *;
+  using ValueType = double;
   using DataType = std::vector<ValueType>;
-  using SizeType = std::size_t;
+  using Reference = typename DataType::reference;
+  using ConstReference = typename DataType::const_reference;
+  using ConstPointer = typename DataType::const_pointer;
+  using SizeType = typename DataType::size_type;
   using Iterator = typename DataType::iterator;
   using ConstIterator = typename DataType::const_iterator;
 
@@ -81,7 +78,7 @@ class Matrix {
    * @param is_column if true then column-vector is build; otherwise row-vector
    * is build
    */
-  explicit Matrix(const Vector<ValueType> &v, bool is_column = false)
+  explicit Matrix(const Vector &v, bool is_column = false)
       : Matrix(is_column ? v.Size() : 1, is_column ? 1 : v.Size()) {
     for (SizeType i = 0; i < std::max(rows_, columns_); ++i)
       GetElement(is_column ? i : 0, is_column ? 0 : i) = v[i];
@@ -423,7 +420,7 @@ class Matrix {
    * @brief Returns copy of matrix
    *
    */
-  Matrix operator+() const noexcept { return *this; }
+  Matrix operator+() const noexcept { return Matrix(*this); }
 
   /**
    * @brief Set new rows count. If rows == 0 then throws std::invalid_argument
