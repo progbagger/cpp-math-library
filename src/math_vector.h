@@ -1,16 +1,8 @@
 #ifndef CPP_MATH_LIBRARY_MATH_VECTOR_H_
 #define CPP_MATH_LIBRARY_MATH_VECTOR_H_
 
-#include <algorithm>
-#include <cmath>
-#include <functional>
-#include <initializer_list>
 #include <istream>
-#include <iterator>
-#include <numeric>
 #include <ostream>
-#include <stdexcept>
-#include <type_traits>
 #include <vector>
 
 namespace math {

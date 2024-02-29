@@ -1,5 +1,9 @@
 #include "math_vector.h"
 
+#include <algorithm>
+#include <cmath>
+#include <numeric>
+
 namespace math {
 
 vector::vector() noexcept : vector(3UL, value_type()) {}
@@ -130,7 +134,8 @@ vector& vector::operator*=(const_reference value) noexcept {
 
 // Divide vector values bu value
 vector& vector::operator/=(const_reference value) noexcept {
-  std::transform(begin(), end(), begin(), std::divides<value_type>());
+  std::transform(begin(), end(), begin(),
+                 [&value](const_reference v) { return v / value; });
   return *this;
 }
 

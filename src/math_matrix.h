@@ -1,9 +1,8 @@
-#ifndef MATH_LIBRARIES_CPP_MATH_MATRIX_H_
-#define MATH_LIBRARIES_CPP_MATH_MATRIX_H_
+#ifndef CPP_MATH_LIBRARY_MATH_MATRIX_H_
+#define CPP_MATH_LIBRARY_MATH_MATRIX_H_
 
 #include <istream>
 #include <ostream>
-#include <stdexcept>
 #include <vector>
 
 #include "math_vector.h"
@@ -14,23 +13,21 @@ namespace math {
  * @brief Matrix class to work with matrices as mathematical object.
  *
  */
-class Matrix {
+class matrix {
  public:
-  using ValueType = double;
-  using DataType = std::vector<ValueType>;
-  using Reference = typename DataType::reference;
-  using ConstReference = typename DataType::const_reference;
-  using ConstPointer = typename DataType::const_pointer;
-  using SizeType = typename DataType::size_type;
-  using Iterator = typename DataType::iterator;
-  using ConstIterator = typename DataType::const_iterator;
-
-  // for foreach compatibility
-  using iterator = Iterator;
-  using const_iterator = ConstIterator;
+  using value_type = double;
+  using data_type = std::vector<value_type>;
+  using reference = typename data_type::reference;
+  using const_reference = typename data_type::const_reference;
+  using const_pointer = typename data_type::const_pointer;
+  using size_type = typename data_type::size_type;
+  using iterator = typename data_type::iterator;
+  using const_iterator = typename data_type::const_iterator;
+  using reverse_iterator = typename data_type::reverse_iterator;
+  using const_reverse_iterator = typename data_type::const_reverse_iterator;
 
   // Constructs 3x3 identity matrix
-  explicit Matrix(ValueType diag = 1) : Matrix(3, diag) {}
+  explicit matrix(const_reference diag = 1);
 
   /**
    * @brief Constructs size x size identity matrix, but the diagonal filled with
@@ -39,16 +36,10 @@ class Matrix {
    * @param size matrix sizes
    * @param diag diagonal element, defaults to 1
    */
-  explicit Matrix(SizeType size, ValueType diag = 1) : Matrix(size, size) {
-    for (SizeType i = 0; i < rows_; ++i) GetElement(i, i) = diag;
-  }
+  explicit matrix(size_type size, const_reference diag = 1);
 
   // Constructs rows x columns matrix filled by default values
-  Matrix(SizeType rows, SizeType columns) : rows_(rows), columns_(columns) {
-    if (!rows_ || !columns_)
-      throw std::invalid_argument("Matrix dimensions can not be 0");
-    data_ = DataType(rows_ * columns_, ValueType());
-  }
+  matrix(size_type rows, size_type columns);
 
   /**
    * @brief Construct a new matrix from initializer list. Initializer list must
@@ -57,19 +48,8 @@ class Matrix {
    *
    * @param items initializer list of initializer lists
    */
-  Matrix(const std::initializer_list<std::initializer_list<ValueType>> &items)
-      : rows_(items.size()) {
-    if (!rows_) throw std::invalid_argument("Matrix sizes can not be 0");
-    columns_ = (*(items.begin())).size();
-    if (!columns_) throw std::invalid_argument("Matrix sizes can not be 0");
-    data_.reserve(rows_ * columns_);
-    for (const auto &row : items) {
-      if (row.size() != columns_)
-        throw std::invalid_argument(
-            "Initializer list columns has different sizes");
-      for (const auto &el : row) data_.push_back(el);
-    }
-  }
+  explicit matrix(
+      const std::initializer_list<std::initializer_list<value_type>> &items);
 
   /**
    * @brief Construct a new vector in form of matrix
@@ -78,17 +58,13 @@ class Matrix {
    * @param is_column if true then column-vector is build; otherwise row-vector
    * is build
    */
-  explicit Matrix(const Vector &v, bool is_column = false)
-      : Matrix(is_column ? v.Size() : 1, is_column ? 1 : v.Size()) {
-    for (SizeType i = 0; i < std::max(rows_, columns_); ++i)
-      GetElement(is_column ? i : 0, is_column ? 0 : i) = v[i];
-  }
+  explicit matrix(const vector &v, bool is_column = false);
 
   // Returns row count
-  SizeType Rows() const noexcept { return rows_; }
+  size_type rows() const noexcept;
 
   // Returns column count
-  SizeType Columns() const noexcept { return columns_; }
+  size_type columns() const noexcept;
 
   /**
    * @brief Get element by position, Throws std::out_of_bounds if row >= rows_
@@ -98,10 +74,7 @@ class Matrix {
    * @param column column of needed element, starts with 0
    * @return read-write reference
    */
-  Reference operator()(SizeType row, SizeType column) {
-    BoundsCheck(row, column);
-    return GetElement(row, column);
-  }
+  reference operator()(size_type row, size_type column);
 
   /**
    * @brief Get element by position, Throws std::out_of_bounds if row >= rows_
@@ -111,391 +84,230 @@ class Matrix {
    * @param column column of needed element, starts with 0
    * @return read-only reference
    */
-  ConstReference operator()(SizeType row, SizeType column) const {
-    BoundsCheck(row, column);
-    return GetElement(row, column);
-  }
+  const_reference operator()(size_type row, size_type column) const;
 
   // Returns read-write iterator to the beginning
-  Iterator Begin() noexcept { return data_.begin(); }
+  iterator begin() noexcept;
 
   // Returns read-only iterator to the beginning
-  ConstIterator Begin() const noexcept { return data_.begin(); }
+  const_iterator begin() const noexcept;
 
   // Returns read-write iterator to the end
-  Iterator End() noexcept { return data_.end(); }
+  iterator end() noexcept;
 
   // Returns read-only iterator to the end
-  ConstIterator End() const noexcept { return data_.end(); }
+  const_iterator end() const noexcept;
 
-  // Returns read-write iterator to the beginning
-  iterator begin() noexcept { return Begin(); }
+  const_iterator cbegin() const noexcept;
 
-  // Returns read-only iterator to the beginning
-  const_iterator begin() const noexcept { return Begin(); }
+  const_iterator cend() const noexcept;
 
-  // Returns read-write iterator to the end
-  iterator end() noexcept { return End(); }
+  reverse_iterator rbegin() noexcept;
 
-  // Returns read-only iterator to the end
-  const_iterator end() const noexcept { return End(); }
+  reverse_iterator rend() noexcept;
+
+  const_reverse_iterator rbegin() const noexcept;
+
+  const_reverse_iterator rend() const noexcept;
+
+  const_reverse_iterator crbegin() const noexcept;
+
+  const_reverse_iterator crend() const noexcept;
 
   /**
    * @brief Outputs matrix in format
-   * {1 2 3}
-   * {4 5 6}
-   * {7 8 9}
+   * [1 2 3]
+   * [4 5 6]
+   * [7 8 9]
    *
    */
-  friend std::ostream &operator<<(std::ostream &out, const Matrix &m) {
-    for (SizeType i = 0; i < m.rows_; ++i) {
-      out << '{';
-      for (SizeType j = 0; j < m.columns_; ++j) {
-        out << m.GetElement(i, j);
-        if (j != m.columns_ - 1) out << ' ';
-      }
-      out << '}';
-      if (i != m.rows_ - 1) out << std::endl;
-    }
-    return out;
-  }
+  friend std::ostream &operator<<(std::ostream &out, const matrix &m);
 
   /**
-   * @brief Inputs rows_ * columns_ elements into the matrix row by row. If
-   * there are not enough elements in in - rest of the elements are unchanged
+   * @brief Inputs rows_ * columns_ elements into the matrix row by row.
    *
    */
-  friend std::istream &operator>>(std::istream &in, Matrix &m) {
-    for (auto &el : m) in >> el;
-    return in;
-  }
+  friend std::istream &operator>>(std::istream &in, matrix &m);
 
   // Exact comparsion of two matrices
-  bool operator==(const Matrix &other) const noexcept {
-    if (rows_ != other.rows_ || columns_ != other.columns_) return false;
-    auto i1 = Begin(), i2 = Begin();
-    while (i1 != End())
-      if (*(i1++) != *(i2++)) return false;
-    return true;
-  }
+  friend bool operator==(const matrix &l, const matrix &r) noexcept;
 
   // Exact comparsion of two matrices
-  bool operator!=(const Matrix &other) const noexcept {
-    return !(*this == other);
-  }
+  friend bool operator!=(const matrix &l, const matrix &r) noexcept;
 
   /**
    * @brief Sum of two matrices into this. Throws std::invalid_argument if sizes
    * are not equal
    *
    */
-  Matrix &operator+=(const Matrix &other) {
-    IsSizesEqual(other);
-    auto i = other.Begin();
-    for (auto &el : *this) el += *(i++);
-    return *this;
-  }
+  matrix &operator+=(const matrix &other);
 
   /**
    * @brief Subtraction of two matrices into this. Throws std::invalid_argument
    * if sizes are not equal
    *
    */
-  Matrix &operator-=(const Matrix &other) {
-    IsSizesEqual(other);
-    auto i = other.Begin();
-    for (auto &el : *this) el -= *(i++);
-    return *this;
-  }
+  matrix &operator-=(const matrix &other);
 
   /**
    * @brief Multiplication of two matrices into this. Throws
    * std::invalid_argument if inner sizes are not equal
    *
    */
-  Matrix &operator*=(const Matrix &other) {
-    IsInnerSizesEqual(other);
-    Matrix result(rows_, other.columns_);
-    for (SizeType i = 0; i < result.rows_; ++i)
-      for (SizeType j = 0; j < result.columns_; ++j)
-        for (SizeType k = 0; k < columns_; ++k)
-          result.GetElement(i, j) += GetElement(i, k) * other.GetElement(k, j);
-    *this = std::move(result);
-    return *this;
-  }
+  matrix &operator*=(const matrix &other);
 
   /**
    * @brief Multiplies all matrix values by given value
    *
    */
-  Matrix &operator*=(const ValueType &value) noexcept {
-    for (auto &el : *this) el *= value;
-    return *this;
-  }
+  matrix &operator*=(const value_type &value) noexcept;
 
   /**
    * @brief Divides all matrix values by given value
    *
    */
-  Matrix &operator/=(const ValueType &value) noexcept {
-    return *this *= (1 / value);
-  }
+  matrix &operator/=(const value_type &value) noexcept;
 
   /**
    * @brief Sum of two matrices into a new matrix. Throws std::invalid_argument
    * if matrix sizes are not equal
    *
    */
-  Matrix operator+(const Matrix &other) const {
-    Matrix result(*this);
-    result += other;
-    return result;
-  }
+  friend matrix operator+(const matrix &l, const matrix &r);
 
   /**
    * @brief Subtraction of two matrices into a new matrix. Throws
    * std::invalid_argument if matrix sizes are not equal
    *
    */
-  Matrix operator-(const Matrix &other) const {
-    Matrix result(*this);
-    result -= other;
-    return result;
-  }
+  friend matrix operator-(const matrix &l, const matrix &r);
 
   /**
    * @brief Multiplication of two matrices into a new matrix. Throws
    * std::invalid_argument if matrix inner sizes are not equal
    *
    */
-  Matrix operator*(const Matrix &other) const {
-    Matrix result(*this);
-    result *= other;
-    return result;
-  }
+  friend matrix operator*(const matrix &l, const matrix &r);
 
   /**
    * @brief Multiplies all matrix values by given value and returns new matrix
    * with these values
    *
    */
-  Matrix operator*(const ValueType &value) const noexcept {
-    Matrix result(*this);
-    result *= value;
-    return result;
-  }
+  friend matrix operator*(const matrix &m, const_reference value);
 
   /**
    * @brief Multiplies all matrix values by given value and returns new matrix
    * with these values
    *
    */
-  friend Matrix operator*(const ValueType &value,
-                          const Matrix &matrix) noexcept {
-    return Matrix(matrix) * value;
-  }
+  friend matrix operator*(const_reference &value, const matrix &matrix);
 
   /**
-   * @brief Divides all matrix values by given value and returns new matrix with
-   * these values
+   * @brief Divides all matrix values by given value and returns new matrix
+   * with these values
    *
    */
-  Matrix operator/(const ValueType &value) const noexcept {
-    Matrix result(*this);
-    result /= value;
-    return result;
-  }
+  friend matrix operator/(const matrix &m, const_reference &value);
 
   // Returns transposed matrix
-  Matrix Transpose() const noexcept {
-    Matrix result(columns_, rows_);
-    for (SizeType i = 0; i < result.rows_; ++i)
-      for (SizeType j = 0; j < result.columns_; ++j)
-        result.GetElement(i, j) = GetElement(j, i);
-    return result;
-  }
+  matrix transposed() const;
 
   /**
    * @brief Returns minor matrix from given row and column. Throws
-   * std::logic_error if matrix is of size 1. Throws std::out_of_range if row >=
-   * rows_ or column >= columns_
+   * std::logic_error if matrix is of size 1. Throws std::out_of_range if row
+   * >= rows_ or column >= columns_
    *
    */
-  Matrix MinorMatrix(SizeType row, SizeType column) const {
-    if (rows_ == 1 || columns_ == 1)
-      throw std::logic_error("Minor matrix of matrix 1x1 is not exist");
-    BoundsCheck(row, column);
-    Matrix result(rows_ - 1, columns_ - 1);
-    for (SizeType i = 0, im = 0; i < rows_; ++i) {
-      if (i == row) continue;
-      for (SizeType j = 0, jm = 0; j < columns_; ++j) {
-        if (j == column) continue;
-        result.GetElement(im, jm++) = GetElement(i, j);
-      }
-      ++im;
-    }
-    return result;
-  }
+  matrix minor_matrix(size_type row, size_type column) const;
 
   // Returns upper triangle matrix with zeroes under main diagonal
-  Matrix TriangleMatrix() const {
-    Matrix result(*this);
-    for (SizeType j = 0; j < result.columns_ - 1; ++j) {
-      SizeType non_zero_row = result.FindNotZeroRow(j, j);
-      if (non_zero_row >= result.rows_) continue;
-      if (non_zero_row != j) {
-        for (SizeType i = 0; i < result.columns_; ++i)
-          result.GetElement(j, i) += result.GetElement(non_zero_row, i);
-      }
-      for (SizeType i = j + 1; i < result.rows_; ++i) {
-        if (result.GetElement(i, j)) {
-          ValueType multiplier =
-              result.GetElement(i, j) / result.GetElement(j, j);
-          for (SizeType k = 0; k < result.columns_; ++k)
-            result.GetElement(i, k) -= result.GetElement(j, k) * multiplier;
-        }
-      }
-    }
-    return result;
-  }
+  matrix upper_triangle_matrix() const;
 
   /**
-   * @brief Calculates determinant of matrix. Throws std::logic_error if matrix
-   * is not square
-   *
-   */
-  ValueType Determinant() const {
-    SquareCheck();
-    Matrix triangle = TriangleMatrix();
-    ValueType result = 1;
-    for (SizeType i = 0; i < triangle.rows_; ++i) {
-      result *= triangle.GetElement(i, i);
-      if (!result) break;
-    }
-    return result;
-  }
-
-  /**
-   * @brief Returns matrix of algebraic complements. Throws std::logic_error if
+   * @brief Calculates determinant of matrix. Throws std::logic_error if
    * matrix is not square
    *
    */
-  Matrix ComplementsMatrix() const {
-    SquareCheck();
-    Matrix result(rows_, columns_);
-    for (SizeType i = 0; i < result.rows_; ++i)
-      for (SizeType j = 0; j < result.columns_; ++j)
-        result.GetElement(i, j) =
-            MinorMatrix(i, j).Determinant() * ((i + j) % 2 ? -1 : 1);
-    return result;
-  }
+  value_type determinant() const;
+
+  /**
+   * @brief Returns matrix of algebraic complements. Throws std::logic_error
+   * if matrix is not square
+   *
+   */
+  matrix complements_matrix() const;
 
   /**
    * @brief Returns inverse matrix. Throws std::logic_error if matrix is not
    * square or determinant == 0
    *
    */
-  Matrix Inverse() const {
-    ValueType det = Determinant();
-    if (!det)
-      throw std::logic_error(
-          "Inverse matrix can not be calculated from matrix with det = 0");
-    return ComplementsMatrix().Transpose() / det;
-  }
+  matrix inverse() const;
+
+  /**
+   * @brief Returns transposed matrix.
+   *
+   */
+  matrix operator!() const;
+
+  /**
+   * @brief Returns matrix of algebraic complements. Throws std::logic_error if
+   * matrix is not square or determinant == 0
+   *
+   * @return matrix
+   */
+  matrix operator*() const;
 
   /**
    * @brief Returns inverse matrix. Throws std::logic_error if matrix is not
    * square or determinant == 0
    *
    */
-  Matrix operator!() const { return Inverse(); }
+  matrix operator~() const;
 
   /**
    * @brief Returns new matrix with elements multiplied by -1
    *
    */
-  Matrix operator-() const noexcept { return *this * -1; }
+  matrix operator-() const;
 
   /**
    * @brief Returns copy of matrix
    *
    */
-  Matrix operator+() const noexcept { return Matrix(*this); }
+  matrix operator+() const;
 
   /**
    * @brief Set new rows count. If rows == 0 then throws std::invalid_argument
    *
    */
-  void SetRows(SizeType rows) {
-    if (!rows) throw std::invalid_argument("Matrix sizes can not be 0");
-    Matrix new_matrix(rows, columns_);
-    for (SizeType i = 0; i < std::min(rows, rows_); ++i)
-      for (SizeType j = 0; j < columns_; ++j)
-        new_matrix.GetElement(i, j) = GetElement(i, j);
-    *this = std::move(new_matrix);
-  }
+  void set_rows(size_type rows);
 
   /**
    * @brief Set new columns count. If columns == 0 then throws
    * std::invalid_argument
    *
    */
-  void SetColumns(SizeType columns) {
-    if (!columns) throw std::invalid_argument("Matrix sizes can not be 0");
-    Matrix new_matrix(rows_, columns);
-    for (SizeType i = 0; i < rows_; ++i)
-      for (SizeType j = 0; j < std::min(columns, columns_); ++j)
-        new_matrix.GetElement(i, j) = GetElement(i, j);
-    *this = std::move(new_matrix);
-  }
+  void set_columns(size_type columns);
 
  private:
-  Reference GetElement(SizeType row, SizeType column) noexcept {
-    return data_[columns_ * row + column];
-  }
+  reference get_element(size_type row, size_type column) noexcept;
+  const_reference get_element(size_type row, size_type column) const noexcept;
 
-  ConstReference GetElement(SizeType row, SizeType column) const noexcept {
-    return data_[columns_ * row + column];
-  }
+  void bounds_check(size_type row, size_type column) const;
+  void is_sizes_equal(const matrix &other) const;
+  void is_inner_sizes_equal(const matrix &other) const;
+  void square_check() const;
 
-  void BoundsCheck(SizeType row, SizeType column) const {
-    if (row >= rows_ || column >= columns_)
-      throw std::out_of_range("Out of range: rows_ = " + std::to_string(rows_) +
-                              ", row = " + std::to_string(row) +
-                              ", columns_ = " + std::to_string(columns_) +
-                              ", column = " + std::to_string(column));
-  }
+  size_type find_not_zero_row(size_type from_row,
+                              size_type column) const noexcept;
 
-  void IsSizesEqual(const Matrix &other) const {
-    if (rows_ != other.rows_ || columns_ != other.columns_)
-      throw std::invalid_argument(
-          "Sizes mismatch: rows_ = " + std::to_string(rows_) +
-          ", other.rows_ = " + std::to_string(other.rows_) +
-          ", columns_ = " + std::to_string(columns_) +
-          ", other.columns_ = " + std::to_string(other.columns_));
-  }
-
-  void IsInnerSizesEqual(const Matrix &other) const {
-    if (columns_ != other.rows_)
-      throw std::invalid_argument(
-          "Inner sizes mismatch: columns_ = " + std::to_string(columns_) +
-              ", other.rows_" = std::to_string(other.rows_));
-  }
-
-  void SquareCheck() const {
-    if (rows_ != columns_) throw std::logic_error("Matrix is not square");
-  }
-
-  SizeType FindNotZeroRow(SizeType from_row, SizeType column) const noexcept {
-    while (!GetElement(from_row, column) && from_row < rows_) ++from_row;
-    return from_row;
-  }
-
-  SizeType rows_;
-  SizeType columns_;
-  DataType data_;
+  size_type rows_;
+  size_type columns_;
+  data_type data_;
 };
 
 }  // namespace math
 
-#endif  // MATH_LIBRARIES_CPP_MATH_MATRIX_H_
+#endif  // CPP_MATH_LIBRARY_MATH_MATRIX_H_
