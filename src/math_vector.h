@@ -1,11 +1,16 @@
-#ifndef MATH_LIBRARIES_CPP_MATH_VECTOR_H_
-#define MATH_LIBRARIES_CPP_MATH_VECTOR_H_
+#ifndef CPP_MATH_LIBRARY_MATH_VECTOR_H_
+#define CPP_MATH_LIBRARY_MATH_VECTOR_H_
 
+#include <algorithm>
 #include <cmath>
+#include <functional>
 #include <initializer_list>
 #include <istream>
+#include <iterator>
+#include <numeric>
 #include <ostream>
 #include <stdexcept>
+#include <type_traits>
 #include <vector>
 
 namespace math {
@@ -15,25 +20,23 @@ namespace math {
  * work with it.
  *
  */
-class Vector {
+class vector {
  public:
-  using ValueType = double;
-  using DataType = std::vector<ValueType>;
-  using Reference = typename DataType::reference;
-  using ConstReference = typename DataType::const_reference;
-  using SizeType = typename DataType::size_type;
-  using Iterator = typename DataType::iterator;
-  using ConstIterator = typename DataType::const_iterator;
-
-  // for foreach compatibility
-  using iterator = Iterator;
-  using const_iterator = ConstIterator;
+  using value_type = double;
+  using data_type = std::vector<value_type>;
+  using reference = typename data_type::reference;
+  using const_reference = typename data_type::const_reference;
+  using size_type = typename data_type::size_type;
+  using iterator = typename data_type::iterator;
+  using const_iterator = typename data_type::const_iterator;
+  using reverse_iterator = typename data_type::reverse_iterator;
+  using const_reverse_iterator = typename data_type::const_reverse_iterator;
 
   /**
    * @brief Construct a new vector of size 3 filled by 0
    *
    */
-  explicit Vector() noexcept : Vector(3UL, ValueType()) {}
+  explicit vector() noexcept;
 
   /**
    * @brief Construct a new vector of size filled by value (0 by default)
@@ -41,21 +44,14 @@ class Vector {
    * @param size size of vector
    * @param value what to fill vector with
    */
-  explicit Vector(SizeType size, ConstReference value = ValueType()) {
-    if (!size) throw std::invalid_argument("Vector size can not be 0");
-    data_ = DataType(size, value);
-  }
+  explicit vector(size_type size, value_type value = value_type());
 
   /**
    * @brief Construct a new vector from initializer list
    *
    * @param list initializer list which size is not 0
    */
-  explicit Vector(const std::initializer_list<ValueType>& list) {
-    if (!list.size()) throw std::invalid_argument("Vector size can not be 0");
-    data_.reserve(list.size());
-    for (const auto& i : list) data_.push_back(i);
-  }
+  explicit vector(const std::initializer_list<value_type>& list);
 
   /**
    * @brief Construct a new vector of size 2
@@ -63,7 +59,7 @@ class Vector {
    * @param x1 X coordinate
    * @param x2 Y coordinate
    */
-  Vector(ConstReference x1, ConstReference x2) noexcept : Vector{x1, x2} {}
+  vector(value_type x1, value_type x2) noexcept;
 
   /**
    * @brief Construct a new vector of size 3
@@ -72,10 +68,25 @@ class Vector {
    * @param x2 Y coordinate
    * @param x3 Z coordinate
    */
-  Vector(ConstReference x1, ConstReference x2, ConstReference x3) noexcept
-      : Vector{x1, x2, x3} {}
+  vector(value_type x1, value_type x2, value_type x3) noexcept;
 
-  SizeType Size() const noexcept { return data_.size(); }
+  /**
+   * @brief Construct a new Vector from a range
+   *
+   * @tparam Iterator forward iterator
+   * @param first beginning of the range
+   * @param last end of the range
+   */
+  template <class Iterator>
+  vector(Iterator first, Iterator last) : data_() {
+    if (std::distance(first, last) == 0) {
+      throw std::invalid_argument("Vector size can not be 0");
+    }
+
+    data_.assign(first, last);
+  }
+
+  size_type size() const noexcept;
 
   /**
    * @brief Get vector element without bounds checking
@@ -83,7 +94,7 @@ class Vector {
    * @param pos Position of needed element
    * @return changable reference
    */
-  Reference operator[](SizeType pos) noexcept { return data_[pos]; }
+  reference operator[](size_type pos) noexcept;
 
   /**
    * @brief Get vector element without bounds checking
@@ -91,7 +102,7 @@ class Vector {
    * @param pos Position of needed element
    * @return constant reference
    */
-  ConstReference operator[](SizeType pos) const noexcept { return data_[pos]; }
+  const_reference operator[](size_type pos) const noexcept;
 
   /**
    * @brief Get vector element with bounds checking
@@ -99,10 +110,7 @@ class Vector {
    * @param pos Position of needed element
    * @return changable reference
    */
-  Reference At(SizeType pos) {
-    CheckSizeForGetter(pos);
-    return data_[pos];
-  }
+  reference at(size_type pos);
 
   /**
    * @brief Get vector element with bounds checking
@@ -110,10 +118,7 @@ class Vector {
    * @param pos Position of needed element
    * @return constant reference
    */
-  ConstReference At(SizeType pos) const {
-    CheckSizeForGetter(pos);
-    return data_[pos];
-  }
+  const_reference at(size_type pos) const;
 
   /**
    * @brief Get vector element with bounds checking
@@ -121,7 +126,7 @@ class Vector {
    * @param pos Position of needed element
    * @return changable reference
    */
-  Reference operator()(SizeType pos) { return At(pos); }
+  reference operator()(size_type pos);
 
   /**
    * @brief Get vector element with bounds checking
@@ -129,31 +134,35 @@ class Vector {
    * @param pos Position of needed element
    * @return constant reference
    */
-  ConstReference operator()(SizeType pos) const { return At(pos); }
+  const_reference operator()(size_type pos) const;
 
   // Returns writable iterator to the beginning of the vector
-  Iterator Begin() noexcept { return data_.begin(); }
+  iterator begin() noexcept;
 
   // Returns read-only iterator to the beginning of the vector
-  ConstIterator Begin() const noexcept { return data_.begin(); }
+  const_iterator begin() const noexcept;
 
   // Returns writable iterator to the past-end of the vector
-  Iterator End() noexcept { return data_.end(); }
+  iterator end() noexcept;
 
   // Returns read-only iterator to the past-end of the vector
-  ConstIterator End() const noexcept { return data_.end(); }
+  const_iterator end() const noexcept;
 
-  // Returns writable iterator to the beginning of the vector
-  Iterator begin() noexcept { return Begin(); }
+  const_iterator cbegin() const noexcept;
 
-  // Returns read-only iterator to the beginning of the vector
-  ConstIterator begin() const noexcept { return Begin(); }
+  const_iterator cend() const noexcept;
 
-  // Returns writable iterator to the past-end of the vector
-  Iterator end() noexcept { return End(); }
+  reverse_iterator rbegin() noexcept;
 
-  // Returns read-only iterator to the past-end of the vector
-  ConstIterator end() const noexcept { return End(); }
+  reverse_iterator rend() noexcept;
+
+  const_reverse_iterator rbegin() const noexcept;
+
+  const_reverse_iterator rend() const noexcept;
+
+  const_reverse_iterator crbegin() const noexcept;
+
+  const_reverse_iterator crend() const noexcept;
 
   /**
    * @brief Outputs vector in format [1, 2, 3].
@@ -162,17 +171,7 @@ class Vector {
    * @param v vector to output
    * @return std::ostream&
    */
-  friend std::ostream& operator<<(std::ostream& out, const Vector& v) {
-    out << '{';
-    bool comma = false;
-    for (auto i = v.Begin(); i != v.End(); ++i) {
-      if (comma) out << ", ";
-      comma = true;
-      out << *i;
-    }
-    out << '}';
-    return out;
-  }
+  friend std::ostream& operator<<(std::ostream& out, const vector& v);
 
   /**
    * @brief Inputs vector. If in indicated fail - leave rest of the vector
@@ -182,102 +181,47 @@ class Vector {
    * @param v vector to input
    * @return std::istream&
    */
-  friend std::istream& operator>>(std::istream& in, Vector& v) {
-    for (auto i = v.Begin(); i != v.End(); ++i) {
-      in >> *i;
-      if (in.fail()) break;
-    }
-    v.data_.shrink_to_fit();
-    return in;
-  }
+  friend std::istream& operator>>(std::istream& in, vector& v);
 
   // Comparison of values of two vectors. Return true if vectors are equal
-  bool operator==(const Vector& other) const noexcept {
-    if (Size() != other.Size()) return false;
-    auto i1 = Begin();
-    for (const auto& i2 : other) {
-      if (*(i1++) != i2) return false;
-    }
-    return true;
-  }
+  friend bool operator==(const vector& l, const vector& r) noexcept;
 
   // Comparison of values of two vectors. Return false if vectors are equal
-  bool operator!=(const Vector& other) const noexcept {
-    return !operator==(other);
-  }
+  friend bool operator!=(const vector& l, const vector& r) noexcept;
 
   // Sum other into this. If this smaller than other - this extends
-  Vector& operator+=(const Vector& other) noexcept {
-    Extend(other.Size());
-    auto i1 = Begin();
-    for (const auto& i2 : other) *(i1++) += i2;
-    return *this;
-  }
+  vector& operator+=(const vector& other);
 
   // Sub other from this. If this smaller than other - this extends
-  Vector& operator-=(const Vector& other) noexcept {
-    Extend(other.Size());
-    auto i1 = Begin();
-    for (const auto& i2 : other) *(i1++) -= i2;
-    return *this;
-  }
+  vector& operator-=(const vector& other);
 
   // Multiply vector values by value
-  Vector& operator*=(ConstReference value) noexcept {
-    for (auto& v : *this) v *= value;
-    return *this;
-  }
+  vector& operator*=(const_reference value) noexcept;
 
   // Divide vector values bu value
-  Vector& operator/=(ConstReference value) noexcept {
-    return operator*=(1 / value);
-  }
+  vector& operator/=(const_reference value) noexcept;
 
-  // Sum of two vectors. If this is smaller than other - this extends
-  Vector operator+(const Vector& other) const noexcept {
-    Vector result(*this);
-    result += other;
-    return result;
-  }
+  // Sum of two vectors. If l is smaller than other - l extends
+  friend vector operator+(const vector& l, const vector& r);
 
-  // Sub of two vectors. If this is smaller than other - this extends
-  Vector operator-(const Vector& other) const noexcept {
-    Vector result(*this);
-    result -= other;
-    return result;
-  }
+  // Sub of two vectors. If l is smaller than other - l extends
+  friend vector operator-(const vector& l, const vector& r);
 
   // Multiply vector values by value
-  Vector operator*(ConstReference value) const noexcept {
-    Vector result(*this);
-    result *= value;
-    return result;
-  }
+  friend vector operator*(const vector& v, const_reference value);
 
   // Divide vector values by value
-  Vector operator/(ConstReference value) const noexcept {
-    Vector result(*this);
-    result /= value;
-    return result;
-  }
+  friend vector operator/(const vector& v, const_reference value);
 
   // Multiply vector values by value
-  friend Vector operator*(ConstReference value, const Vector& v) noexcept {
-    return Vector(v) * value;
-  }
+  friend vector operator*(const_reference value, const vector& v);
 
   /**
    * @brief Calculates cross product of two vectors. If vectors have different
    * sizes - throws std::invalid_argument
    *
    */
-  ValueType operator*(const Vector& other) const {
-    CheckSizeForOperation(other);
-    ValueType result = 0;
-    auto i1 = Begin(), i2 = other.Begin();
-    while (i1 != End()) result += *(i1++) * *(i2++);
-    return result;
-  }
+  friend value_type operator*(const vector& l, const vector& r);
 
   /**
    * @brief Change size of vector. If new size greater than size - fill with
@@ -286,10 +230,7 @@ class Vector {
    * @param new_size
    * @param value
    */
-  void Resize(SizeType new_size, ConstReference value = ValueType()) {
-    if (!new_size) throw std::invalid_argument("Vector size can not be 0");
-    data_.resize(new_size, value);
-  }
+  void resize(size_type new_size, const_reference value = value_type());
 
   /**
    * @brief Enlarge vector. If new size is less or equal - do nothing
@@ -297,34 +238,16 @@ class Vector {
    * @param new_size
    * @param value
    */
-  void Extend(SizeType new_size,
-              const ValueType& value = ValueType()) noexcept {
-    if (new_size > Size()) data_.resize(new_size, value);
-  }
+  void extend(size_type new_size, const value_type& value = value_type());
 
   // Calculates vector absolute value
-  ValueType Abs() const noexcept {
-    ValueType result = 0;
-    for (const auto& v : *this) result += v * v;
-    return sqrt(result);
-  }
+  value_type abs() const noexcept;
 
  private:
-  void CheckSizeForGetter(SizeType pos) const {
-    if (pos >= Size())
-      throw std::out_of_range(std::string("pos >= size, pos = ") +
-                              std::to_string(pos) +
-                              ", size = " + std::to_string(Size()));
-  }
+  void check_size_for_getter(size_type pos) const;
+  void check_size_for_operation(const vector& other) const;
 
-  void CheckSizeForOperation(const Vector& other) const {
-    if (Size() != other.Size())
-      throw std::invalid_argument(
-          "size != other.size, size = " + std::to_string(Size()) +
-          ", other.size = " + std::to_string(other.Size()));
-  }
-
-  DataType data_;
+  data_type data_;
 };
 
 }  // namespace math
@@ -333,8 +256,8 @@ class Vector {
 
 namespace std {
 
-math::Vector::ValueType abs(const math::Vector& v) noexcept { return v.Abs(); }
+math::vector::value_type abs(const math::vector& v) noexcept;
 
 }  // namespace std
 
-#endif  // MATH_LIBRARIES_CPP_MATH_VECTOR_H_
+#endif  // CPP_MATH_LIBRARY_MATH_VECTOR_H_
